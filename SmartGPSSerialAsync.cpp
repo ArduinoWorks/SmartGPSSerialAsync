@@ -1,9 +1,7 @@
 #include "SmartGPSSerialAsync.h"
 
 byte SmartGPS::isReady() {
-  //Serial.println("isReady?");
-  if (fieldNum >= 9) return 1;
-  return 0;//readyToGet;
+  return readyToGet;
 };
 
 void SmartGPS::setRun(char *b, int l) {
@@ -11,10 +9,16 @@ void SmartGPS::setRun(char *b, int l) {
   len = l;
 }
 
+void SmartGPS::doneRead() {
+  readyToGet=0; // прочитано, но снова не надо читать
+}
+
 void SmartGPS::continueRun() {
-  reading = 1;
-  found = 0;
-  setRun(commandBuf, COMMAND_BUFFER);
+  if (!reading) { // если уже прочитали
+    reading = 1;
+    found = 0;
+    setRun(commandBuf, COMMAND_BUFFER);
+  }
 };
 
 void SmartGPS::run() {
@@ -23,20 +27,13 @@ void SmartGPS::run() {
       *ptr = port->read();
       if (ptr - buf == len - 1 || *ptr == ',' || *ptr == '\n' || *ptr == '\r' ) {
         *ptr = 0;
-        /*
-          Serial.print("Token: '");
-          Serial.print(buf);
-          Serial.print("' ");
-          Serial.println(ptr-buf);
-        */
+        //Serial.print("Token:");
+        //Serial.println(buf);
         if (0 == strcmp(buf, "$GPRMC")) {
           fieldNum = 0;
           found = 1;
-          //Serial.print("Header found: ");
-          //Serial.println(buf);
         }
         if (found) {
-          //Serial.print("Field: "); Serial.print(buf); Serial.println(" : "); Serial.println(fieldNum);
           switch (fieldNum) {
             case 0:
               setRun(data->timeUTC, sizeof(GPSData::timeUTC));

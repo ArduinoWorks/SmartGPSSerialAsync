@@ -61,6 +61,7 @@ class SmartGPS {
     void run();
     byte isReady();
     void continueRun();
+    void doneRead();
   private:
     void setRun(char *b, int l);
 };
